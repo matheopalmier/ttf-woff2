@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTF to WOFF2 Converter - Server Edition</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --border-color: #e5e7eb;
+            --bg-color: #f9fafb;
+            --text-color: #1f2937;
+            --light-text: #6b7280;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-size: 2.25rem;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        header p {
+            color: var(--light-text);
+            font-size: 1.1rem;
+        }
+        
+        .server-badge {
+            display: inline-block;
+            background-color: #4f46e5;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        
+        main {
+            margin-bottom: 40px;
+        }
+        
+        .drop-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            background-color: white;
+            cursor: pointer;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+        
+        .drop-area.active {
+            border-color: var(--primary-color);
+            background-color: rgba(79, 70, 229, 0.05);
+        }
+        
+        .drop-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .drop-message svg {
+            color: var(--primary-color);
+            width: 60px;
+            height: 60px;
+        }
+        
+        .drop-message p {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+        
+        .drop-message span {
+            color: var(--light-text);
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .file-input-label {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .file-input-label:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        .conversion-status {
+            margin-top: 40px;
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            transition: opacity 0.3s ease, height 0.3s ease;
+        }
+        
+        .conversion-status.active {
+            opacity: 1;
+            height: auto;
+        }
+        
+        .conversion-status h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+        
+        .status-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .status-item {
+            padding: 15px;
+            border-radius: 8px;
+            background-color: white;
+            border: 1px solid var(--border-color);
+        }
+        
+        .status-item-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .status-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .status-icon.processing svg {
+            animation: spin 1.5s linear infinite;
+            color: var(--primary-color);
+        }
+        
+        .status-icon.success svg {
+            color: var(--success-color);
+        }
+        
+        .status-icon.error svg {
+            color: var(--error-color);
+        }
+        
+        .filename {
+            font-weight: 500;
+        }
+        
+        .error-message {
+            color: var(--error-color);
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background-color: var(--border-color);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+        
+        .download-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            margin-top: 15px;
+            border: none;
+            font-size: 0.95rem;
+        }
+        
+        .download-button:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        .server-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #d1d5db;
+        }
+        
+        .status-indicator.online {
+            background-color: var(--success-color);
+        }
+        
+        .status-indicator.offline {
+            background-color: var(--error-color);
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        footer {
+            text-align: center;
+            color: var(--light-text);
+            margin-top: 60px;
+        }
+        
+        footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .alternatives {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            border-left: 3px solid var(--light-text);
+        }
+        
+        .alternatives h4 {
+            margin-bottom: 8px;
+        }
+        
+        .alternatives ul {
+            padding-left: 20px;
+        }
+        
+        .alternatives li {
+            margin-bottom: 5px;
+        }
+        
+        .alternatives a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .alternatives a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>TTF to WOFF2 Converter <span class="server-badge">SERVER</span></h1>
+            <p>Drop your TTF font files here to convert them to WOFF2 format</p>
+        </header>
+        
+        <main>
+            <div class="server-status">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span id="serverStatusText">Checking server status...</span>
+            </div>
+            
+            <div class="drop-area" id="dropArea">
+                <div class="drop-message">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p>Drag & Drop TTF Files Here</p>
+                    <span>or</span>
+                    <label for="fileInput" class="file-input-label">Browse Files</label>
+                    <input type="file" id="fileInput" accept=".ttf" multiple>
+                </div>
+            </div>
+            
+            <div class="conversion-status" id="conversionStatus">
+                <h2>Conversion Status</h2>
+                <div class="status-list" id="statusList"></div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>Created with ❤️ | Server-Side TTF to WOFF2 Conversion</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Base URL for the server
+            const SERVER_URL = window.location.origin;
+            
+            // Elements
+            const dropArea = document.getElementById('dropArea');
+            const fileInput = document.getElementById('fileInput');
+            const statusList = document.getElementById('statusList');
+            const conversionStatus = document.getElementById('conversionStatus');
+            const statusIndicator = document.getElementById('statusIndicator');
+            const serverStatusText = document.getElementById('serverStatusText');
+            
+            // Check server status
+            checkServerStatus();
+            
+            // Event listeners for drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            dropArea.addEventListener('drop', handleDrop, false);
+            fileInput.addEventListener('change', handleFiles, false);
+            
+            function checkServerStatus() {
+                fetch(`${SERVER_URL}/status`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Server is not responding');
+                        return response.json();
+                    })
+                    .then(data => {
+                        statusIndicator.className = 'status-indicator online';
+                        serverStatusText.textContent = 'Server is online and ready for conversion';
+                        dropArea.style.opacity = '1';
+                        dropArea.style.pointerEvents = 'auto';
+                    })
+                    .catch(error => {
+                        statusIndicator.className = 'status-indicator offline';
+                        serverStatusText.textContent = 'Server is offline. Please try again later.';
+                        dropArea.style.opacity = '0.5';
+                        dropArea.style.pointerEvents = 'none';
+                        console.error('Server status check failed:', error);
+                    });
+            }
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            function highlight() {
+                dropArea.classList.add('active');
+            }
+            
+            function unhighlight() {
+                dropArea.classList.remove('active');
+            }
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles({ files });
+            }
+            
+            function handleFiles(e) {
+                let files;
+                if (e.files) {
+                    files = e.files;
+                } else {
+                    files = e.target.files;
+                }
+                
+                conversionStatus.classList.add('active');
+                
+                Array.from(files).forEach(file => {
+                    if (file.name.toLowerCase().endsWith('.ttf')) {
+                        convertFont(file);
+                    } else {
+                        addStatusItem(file.name, 'error', 'Not a TTF file');
+                    }
+                });
+                
+                if (fileInput) {
+                    fileInput.value = '';
+                }
+            }
+            
+            function convertFont(file) {
+                // Check if we already have an item for this file
+                const existingItem = Array.from(statusList.children).find(
+                    item => item.dataset.filename === file.name
+                );
+                
+                if (existingItem) {
+                    statusList.removeChild(existingItem);
+                }
+                
+                const statusItem = addStatusItem(file.name, 'processing');
+                
+                // Create a FormData object to send the file
+                const formData = new FormData();
+                formData.append('ttfFile', file);
+                
+                // Create progress bar
+                const progressContainer = document.createElement('div');
+                progressContainer.className = 'progress-bar-container';
+                
+                const progressBar = document.createElement('div');
+                progressBar.className = 'progress-bar';
+                progressContainer.appendChild(progressBar);
+                statusItem.appendChild(progressContainer);
+                
+                // Start with a mock progress animation
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    if (progress >= 90) {
+                        clearInterval(progressInterval);
+                    } else {
+                        progress += Math.random() * 5;
+                        progressBar.style.width = `${Math.min(progress, 90)}%`;
+                    }
+                }, 300);
+                
+                // Send the request to the server
+                fetch(`${SERVER_URL}/convert`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    clearInterval(progressInterval);
+                    
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'Conversion failed');
+                        });
+                    }
+                    
+                    progressBar.style.width = '100%';
+                    progressBar.style.backgroundColor = 'var(--success-color)';
+                    
+                    // For a successful response, get the blob and create a download link
+                    return response.blob().then(blob => {
+                        const url = URL.createObjectURL(blob);
+                        const woff2Filename = file.name.replace('.ttf', '.woff2');
+                        
+                        // Create download button
+                        const downloadButton = document.createElement('a');
+                        downloadButton.href = url;
+                        downloadButton.download = woff2Filename;
+                        downloadButton.className = 'download-button';
+                        downloadButton.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Download WOFF2
+                        `;
+                        
+                        statusItem.appendChild(downloadButton);
+                        updateStatusItem(statusItem, 'success');
+                    });
+                })
+                .catch(error => {
+                    clearInterval(progressInterval);
+                    progressBar.style.width = '100%';
+                    progressBar.style.backgroundColor = 'var(--error-color)';
+                    
+                    // Display error message
+                    console.error('Conversion error:', error);
+                    updateStatusItem(statusItem, 'error', error.message);
+                    
+                    // Add alternatives section
+                    const alternatives = document.createElement('div');
+                    alternatives.className = 'alternatives';
+                    alternatives.innerHTML = `
+                        <h4>Try These Alternatives:</h4>
+                        <ul>
+                            <li><a href="https://cloudconvert.com/ttf-to-woff2" target="_blank">CloudConvert</a></li>
+                            <li><a href="https://fontforge.org/" target="_blank">FontForge</a> (desktop app)</li>
+                            <li><a href="https://github.com/google/woff2" target="_blank">Google's woff2 utility</a> (command line)</li>
+                        </ul>
+                    `;
+                    statusItem.appendChild(alternatives);
+                });
+            }
+            
+            function addStatusItem(fileName, status, message = '') {
+                const statusItem = document.createElement('div');
+                statusItem.className = 'status-item';
+                statusItem.dataset.filename = fileName;
+                
+                const header = document.createElement('div');
+                header.className = 'status-item-header';
+                
+                const statusIcon = document.createElement('div');
+                statusIcon.className = `status-icon ${status}`;
+                
+                if (status === 'processing') {
+                    statusIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>';
+                } else if (status === 'success') {
+                    statusIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+                } else if (status === 'error') {
+                    statusIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+                }
+                
+                const filenameSpan = document.createElement('span');
+                filenameSpan.className = 'filename';
+                filenameSpan.textContent = fileName;
+                
+                header.appendChild(statusIcon);
+                header.appendChild(filenameSpan);
+                statusItem.appendChild(header);
+                
+                if (status === 'error' && message) {
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'error-message';
+                    errorMessage.textContent = message;
+                    statusItem.appendChild(errorMessage);
+                }
+                
+                statusList.appendChild(statusItem);
+                return statusItem;
+            }
+            
+            function updateStatusItem(statusItem, newStatus, errorMessage = '') {
+                const statusIcon = statusItem.querySelector('.status-icon');
+                statusIcon.className = `status-icon ${newStatus}`;
+                
+                if (newStatus === 'error' && errorMessage) {
+                    // Check if error message already exists
+                    let errorElement = statusItem.querySelector('.error-message');
+                    
+                    if (!errorElement) {
+                        errorElement = document.createElement('div');
+                        errorElement.className = 'error-message';
+                        statusItem.appendChild(errorElement);
+                    }
+                    
+                    errorElement.textContent = errorMessage;
+                }
+                
+                if (newStatus === 'success') {
+                    statusIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+                } else if (newStatus === 'error') {
+                    statusIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

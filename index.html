@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTF to WOFF2 Converter</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>TTF to WOFF2 Converter</h1>
+            <p>Drop your TTF font files here to convert them to WOFF2 format</p>
+        </header>
+        
+        <main>
+            <div class="drop-area" id="dropArea">
+                <div class="drop-message">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p>Drag & Drop TTF Files Here</p>
+                    <span>or</span>
+                    <label for="fileInput" class="file-input-label">Browse Files</label>
+                    <input type="file" id="fileInput" accept=".ttf" multiple>
+                </div>
+            </div>
+            
+            <div class="conversion-status" id="conversionStatus">
+                <h2>Conversion Status</h2>
+                <div class="status-list" id="statusList"></div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>Created with ❤️ | <a href="https://github.com/yourusername/ttf-woff2" target="_blank">View on GitHub</a></p>
+        </footer>
+    </div>
+
+    <script src="js/bundle.js"></script>
+</body>
+</html> 
