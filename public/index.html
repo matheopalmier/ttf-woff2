@@ -4,23 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TTF to WOFF2 Converter - Server Edition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #4f46e5;
-            --primary-hover: #4338ca;
+            --primary-color: #6366f1;
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            --primary-hover: #4f46e5;
             --success-color: #10b981;
+            --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
             --error-color: #ef4444;
+            --error-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             --border-color: #e5e7eb;
-            --bg-color: #f9fafb;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
             --text-color: #1f2937;
             --light-text: #6b7280;
+            --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --neomorphic-shadow: 8px 8px 16px #e0e0e0, -8px -8px 16px #ffffff;
+            --neomorphic-pressed: inset 4px 4px 8px #e0e0e0, inset -4px -4px 8px #ffffff;
         }
         
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         
         body {
@@ -28,80 +40,137 @@
             color: var(--text-color);
             line-height: 1.6;
             padding: 20px;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 25%),
+                radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.03) 0%, transparent 100%);
+            background-attachment: fixed;
         }
         
         .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 30px;
+            position: relative;
         }
         
         header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
+            position: relative;
         }
         
         h1 {
-            font-size: 2.25rem;
+            font-size: 2.5rem;
             color: var(--text-color);
             margin-bottom: 0.5rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            position: relative;
+            display: inline-block;
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: var(--primary-gradient);
+            border-radius: 2px;
         }
         
         header p {
             color: var(--light-text);
-            font-size: 1.1rem;
+            font-size: 1.2rem;
+            margin-top: 15px;
         }
         
         .server-badge {
             display: inline-block;
-            background-color: #4f46e5;
+            background: var(--primary-gradient);
             color: white;
-            padding: 3px 8px;
-            border-radius: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
             font-size: 0.85rem;
             margin-left: 8px;
             vertical-align: middle;
+            font-weight: 600;
+            box-shadow: var(--shadow-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
         
         main {
             margin-bottom: 40px;
+            position: relative;
         }
         
         .drop-area {
-            border: 2px dashed var(--border-color);
-            border-radius: 12px;
-            padding: 40px 20px;
+            border: 2px dashed rgba(99, 102, 241, 0.3);
+            border-radius: 16px;
+            padding: 50px 30px;
             text-align: center;
-            background-color: white;
+            background-color: var(--card-bg);
             cursor: pointer;
-            transition: border-color 0.3s ease, background-color 0.3s ease;
+            transition: all 0.3s ease;
+            box-shadow: var(--neomorphic-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .drop-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(139, 92, 246, 0.03) 100%);
+            z-index: 0;
         }
         
         .drop-area.active {
             border-color: var(--primary-color);
-            background-color: rgba(79, 70, 229, 0.05);
+            box-shadow: var(--neomorphic-pressed);
+            transform: scale(0.99);
         }
         
         .drop-message {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
+            position: relative;
+            z-index: 1;
         }
         
         .drop-message svg {
             color: var(--primary-color);
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
+            filter: drop-shadow(0 4px 6px rgba(99, 102, 241, 0.2));
+            transition: transform 0.3s ease;
+        }
+        
+        .drop-area:hover .drop-message svg {
+            transform: translateY(-5px);
         }
         
         .drop-message p {
-            font-size: 1.2rem;
-            font-weight: 500;
+            font-size: 1.4rem;
+            font-weight: 600;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .drop-message span {
             color: var(--light-text);
+            font-size: 1.1rem;
         }
         
         input[type="file"] {
@@ -109,25 +178,45 @@
         }
         
         .file-input-label {
-            background-color: var(--primary-color);
+            background: var(--primary-gradient);
             color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 12px 24px;
+            border-radius: 30px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
-            font-weight: 500;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        
+        .file-input-label::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(255, 255, 255, 0.1), transparent);
+            transition: transform 0.5s ease;
         }
         
         .file-input-label:hover {
-            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .file-input-label:hover::before {
+            transform: translateY(100%);
         }
         
         .conversion-status {
-            margin-top: 40px;
+            margin-top: 50px;
             opacity: 0;
             height: 0;
             overflow: hidden;
-            transition: opacity 0.3s ease, height 0.3s ease;
+            transition: opacity 0.5s ease, height 0.5s ease;
         }
         
         .conversion-status.active {
@@ -136,35 +225,61 @@
         }
         
         .conversion-status h2 {
-            font-size: 1.5rem;
-            margin-bottom: 20px;
+            font-size: 1.8rem;
+            margin-bottom: 25px;
             color: var(--text-color);
+            font-weight: 600;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .conversion-status h2::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 40px;
+            height: 3px;
+            background: var(--primary-gradient);
+            border-radius: 2px;
         }
         
         .status-list {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 20px;
         }
         
         .status-item {
-            padding: 15px;
-            border-radius: 8px;
-            background-color: white;
-            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 16px;
+            background-color: var(--card-bg);
+            border: none;
+            box-shadow: var(--neomorphic-shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .status-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
         }
         
         .status-item-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
+            gap: 15px;
+            margin-bottom: 15px;
         }
         
         .status-icon {
             display: flex;
             align-items: center;
             justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #f9fafb;
+            box-shadow: var(--neomorphic-shadow);
         }
         
         .status-icon.processing svg {
@@ -172,81 +287,151 @@
             color: var(--primary-color);
         }
         
+        .status-icon.success {
+            background: var(--success-gradient);
+        }
+        
         .status-icon.success svg {
-            color: var(--success-color);
+            color: white;
+        }
+        
+        .status-icon.error {
+            background: var(--error-gradient);
         }
         
         .status-icon.error svg {
-            color: var(--error-color);
+            color: white;
         }
         
         .filename {
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 1.1rem;
         }
         
         .error-message {
             color: var(--error-color);
-            margin-top: 10px;
-            font-size: 0.9rem;
+            margin-top: 12px;
+            font-size: 0.95rem;
+            padding: 10px 15px;
+            background-color: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid var(--error-color);
         }
         
         .progress-bar-container {
             width: 100%;
-            height: 6px;
-            background-color: var(--border-color);
-            border-radius: 3px;
+            height: 8px;
+            background-color: #f3f4f6;
+            border-radius: 4px;
             overflow: hidden;
             margin-top: 15px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
         .progress-bar {
             height: 100%;
             width: 0%;
-            background-color: var(--primary-color);
+            background: var(--primary-gradient);
             transition: width 0.3s ease;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0) 0%, 
+                rgba(255, 255, 255, 0.3) 50%, 
+                rgba(255, 255, 255, 0) 100%);
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
         
         .download-button {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            background-color: var(--primary-color);
+            gap: 10px;
+            background: var(--success-gradient);
             color: white;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 500;
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-weight: 600;
             cursor: pointer;
             text-decoration: none;
-            margin-top: 15px;
+            margin-top: 20px;
             border: none;
-            font-size: 0.95rem;
+            font-size: 1rem;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .download-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(255, 255, 255, 0.1), transparent);
+            transition: transform 0.5s ease;
         }
         
         .download-button:hover {
-            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .download-button:hover::before {
+            transform: translateY(100%);
         }
         
         .server-status {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 20px;
-            font-size: 0.95rem;
+            gap: 10px;
+            margin-bottom: 25px;
+            font-size: 1rem;
+            padding: 12px 20px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--neomorphic-shadow);
         }
         
         .status-indicator {
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
             background-color: #d1d5db;
+            position: relative;
         }
         
         .status-indicator.online {
             background-color: var(--success-color);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+            animation: pulse 2s infinite;
         }
         
         .status-indicator.offline {
             background-color: var(--error-color);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
         
         @keyframes spin {
@@ -258,12 +443,15 @@
         footer {
             text-align: center;
             color: var(--light-text);
-            margin-top: 60px;
+            margin-top: 70px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(229, 231, 235, 0.5);
         }
         
         footer a {
             color: var(--primary-color);
             text-decoration: none;
+            font-weight: 500;
         }
         
         footer a:hover {
@@ -271,15 +459,31 @@
         }
         
         .alternatives {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f8fafc;
-            border-radius: 8px;
-            border-left: 3px solid var(--light-text);
+            margin-top: 25px;
+            padding: 20px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--neomorphic-shadow);
+            border-left: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .alternatives::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, var(--primary-color), var(--primary-hover));
+            border-radius: 2px;
         }
         
         .alternatives h4 {
-            margin-bottom: 8px;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            color: var(--text-color);
         }
         
         .alternatives ul {
@@ -287,16 +491,53 @@
         }
         
         .alternatives li {
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            position: relative;
+        }
+        
+        .alternatives li::before {
+            content: '•';
+            color: var(--primary-color);
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
         }
         
         .alternatives a {
             color: var(--primary-color);
             text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
         }
         
         .alternatives a:hover {
+            color: var(--primary-hover);
             text-decoration: underline;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .drop-area {
+                padding: 30px 15px;
+            }
+            
+            .drop-message svg {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .drop-message p {
+                font-size: 1.2rem;
+            }
         }
     </style>
 </head>
@@ -351,6 +592,17 @@
             const statusIndicator = document.getElementById('statusIndicator');
             const serverStatusText = document.getElementById('serverStatusText');
             
+            // Add subtle animation to the header
+            const headerTitle = document.querySelector('h1');
+            headerTitle.style.opacity = '0';
+            headerTitle.style.transform = 'translateY(20px)';
+            headerTitle.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+            
+            setTimeout(() => {
+                headerTitle.style.opacity = '1';
+                headerTitle.style.transform = 'translateY(0)';
+            }, 300);
+            
             // Check server status
             checkServerStatus();
             
@@ -382,6 +634,16 @@
                         serverStatusText.textContent = 'Server is online and ready for conversion';
                         dropArea.style.opacity = '1';
                         dropArea.style.pointerEvents = 'auto';
+                        
+                        // Add animation to drop area
+                        dropArea.style.transform = 'translateY(20px)';
+                        dropArea.style.opacity = '0';
+                        dropArea.style.transition = 'transform 0.6s ease, opacity 0.6s ease';
+                        
+                        setTimeout(() => {
+                            dropArea.style.transform = 'translateY(0)';
+                            dropArea.style.opacity = '1';
+                        }, 400);
                     })
                     .catch(error => {
                         statusIndicator.className = 'status-indicator offline';
@@ -421,6 +683,14 @@
                 
                 conversionStatus.classList.add('active');
                 
+                // Animate the conversion status section
+                conversionStatus.style.transform = 'translateY(20px)';
+                conversionStatus.style.transition = 'transform 0.6s ease, opacity 0.6s ease, height 0.6s ease';
+                
+                setTimeout(() => {
+                    conversionStatus.style.transform = 'translateY(0)';
+                }, 100);
+                
                 Array.from(files).forEach(file => {
                     if (file.name.toLowerCase().endsWith('.ttf')) {
                         convertFont(file);
@@ -445,6 +715,16 @@
                 }
                 
                 const statusItem = addStatusItem(file.name, 'processing');
+                
+                // Add entrance animation to status item
+                statusItem.style.opacity = '0';
+                statusItem.style.transform = 'translateY(10px)';
+                statusItem.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                
+                setTimeout(() => {
+                    statusItem.style.opacity = '1';
+                    statusItem.style.transform = 'translateY(0)';
+                }, 50);
                 
                 // Create a FormData object to send the file
                 const formData = new FormData();
@@ -506,7 +786,18 @@
                             Download WOFF2
                         `;
                         
+                        // Add animation to download button
+                        downloadButton.style.opacity = '0';
+                        downloadButton.style.transform = 'translateY(10px)';
+                        downloadButton.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                        
                         statusItem.appendChild(downloadButton);
+                        
+                        setTimeout(() => {
+                            downloadButton.style.opacity = '1';
+                            downloadButton.style.transform = 'translateY(0)';
+                        }, 100);
+                        
                         updateStatusItem(statusItem, 'success');
                     });
                 })
@@ -530,7 +821,18 @@
                             <li><a href="https://github.com/google/woff2" target="_blank">Google's woff2 utility</a> (command line)</li>
                         </ul>
                     `;
+                    
+                    // Add animation to alternatives
+                    alternatives.style.opacity = '0';
+                    alternatives.style.transform = 'translateY(10px)';
+                    alternatives.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                    
                     statusItem.appendChild(alternatives);
+                    
+                    setTimeout(() => {
+                        alternatives.style.opacity = '1';
+                        alternatives.style.transform = 'translateY(0)';
+                    }, 100);
                 });
             }
             
@@ -584,6 +886,16 @@
                         errorElement = document.createElement('div');
                         errorElement.className = 'error-message';
                         statusItem.appendChild(errorElement);
+                        
+                        // Add animation to error message
+                        errorElement.style.opacity = '0';
+                        errorElement.style.transform = 'translateY(10px)';
+                        errorElement.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                        
+                        setTimeout(() => {
+                            errorElement.style.opacity = '1';
+                            errorElement.style.transform = 'translateY(0)';
+                        }, 50);
                     }
                     
                     errorElement.textContent = errorMessage;
