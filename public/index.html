@@ -571,7 +571,10 @@
             </div>
             
             <div class="conversion-status" id="conversionStatus">
-                <h2>Conversion Status</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h2 style="margin: 0;">Conversion Status</h2>
+                    <div id="downloadAllContainer" style="display: none;"></div>
+                </div>
                 <div class="status-list" id="statusList"></div>
             </div>
         </main>
@@ -800,6 +803,15 @@
                             downloadButton.style.transform = 'translateY(0)';
                         }, 100);
                         
+                        // Stocker les informations du fichier converti
+                        successfulConversions.push({
+                            url: url,
+                            filename: woff2Filename
+                        });
+                        
+                        // Mettre à jour ou créer le bouton "Télécharger tout"
+                        updateDownloadAllButton();
+                        
                         updateStatusItem(statusItem, 'success');
                     });
                 })
@@ -908,6 +920,70 @@
                 } else if (newStatus === 'error') {
                     statusIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
                 }
+            }
+            
+            // Ajoutez ces variables au début du script
+            const downloadAllContainer = document.getElementById('downloadAllContainer');
+            let successfulConversions = [];
+            
+            function updateDownloadAllButton() {
+                // Ne montrer le bouton que s'il y a au moins un fichier converti
+                if (successfulConversions.length > 0) {
+                    downloadAllContainer.style.display = 'block';
+                    
+                    // Supprimer l'ancien bouton s'il existe
+                    while (downloadAllContainer.firstChild) {
+                        downloadAllContainer.removeChild(downloadAllContainer.firstChild);
+                    }
+                    
+                    // Créer le nouveau bouton
+                    const downloadAllButton = document.createElement('button');
+                    downloadAllButton.className = 'download-button';
+                    downloadAllButton.style.fontSize = '1rem';
+                    downloadAllButton.style.padding = '10px 20px';
+                    downloadAllButton.style.margin = '0'; // Assurer qu'il n'y a pas de marge
+                    downloadAllButton.style.verticalAlign = 'middle'; // Alignement vertical
+                    downloadAllButton.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span style="vertical-align: middle;">Download all (${successfulConversions.length})</span>
+                    `;
+                    
+                    // Ajouter l'animation
+                    downloadAllButton.style.opacity = '0';
+                    downloadAllButton.style.transform = 'translateX(10px)';
+                    downloadAllButton.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                    
+                    // Ajouter l'événement de clic pour télécharger tous les fichiers
+                    downloadAllButton.addEventListener('click', downloadAllFiles);
+                    
+                    downloadAllContainer.appendChild(downloadAllButton);
+                    
+                    setTimeout(() => {
+                        downloadAllButton.style.opacity = '1';
+                        downloadAllButton.style.transform = 'translateX(0)';
+                    }, 100);
+                } else {
+                    downloadAllContainer.style.display = 'none';
+                }
+            }
+            
+            function downloadAllFiles() {
+                // Pour chaque fichier converti, créer un lien invisible et cliquer dessus
+                successfulConversions.forEach((file, index) => {
+                    // Ajouter un délai pour éviter que le navigateur ne bloque les téléchargements multiples
+                    setTimeout(() => {
+                        const link = document.createElement('a');
+                        link.href = file.url;
+                        link.download = file.filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }, index * 500); // Délai de 500ms entre chaque téléchargement
+                });
             }
         });
     </script>
